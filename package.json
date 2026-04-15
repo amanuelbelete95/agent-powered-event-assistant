@@ -1,12 +1,27 @@
 {
+  "name": "event-ai-agent",
+  "version": "1.0.0",
+  "description": "AI Agent with MCP and RAG for Event Management System",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "node --loader ts-node/esm src/index.ts",
+    "agent": "tsx src/main-agent.ts",
+    "mcp": "tsx src/mcp-server.ts",
+    "discover": "tsx src/discovery-script.ts",
+    "test": "tsx -e \"import { loadApiMap, embedChunks, search } from './src/rag-engine.js'; loadApiMap(); embedChunks().then(async () => { const r = await search('test'); console.log('RAG works:', r.length, 'results'); });\""
+  },
   "dependencies": {
     "@langchain/core": "^0.3.80",
     "@langchain/ollama": "^0.2.4",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "dotenv": "^17.4.2",
     "langchain": "^0.3.37"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }
 }

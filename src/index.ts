@@ -1,26 +1,29 @@
-import { OllamaEmbeddings } from "@langchain/ollama";
-import { MemoryVectorStore } from "langchain/vectorstores/memory";
+import config from './config.js';
 
-async function setupRAG() {
-  // 1. Initialize the Embedding Model (The Librarian)
-  const embeddings = new OllamaEmbeddings({
-    model: "nomic-embed-text",
-    baseUrl: "http://localhost:11434",
-  });
+console.log(`
+╔═══════════════════════════════════════════════════════════╗
+║          Event Management AI Agent System                  ║
+║          (MCP + RAG Implementation)                          ║
+╚═══════════════════════════════════════════════════════════╝
 
-  // 2. Create the Vector Store
-  // In a real project, you'd load a PDF or Text file here
-  const vectorStore = new MemoryVectorStore(embeddings);
+Available commands:
+  npm run agent    - Start main interactive agent
+  npm run mcp      - Start MCP server (stdio mode)
+  npm run discover - Regenerate API documentation
+  npm run test     - Quick test of RAG system
+`);
 
-  // 3. Add your project documentation to the "Memory"
-  await vectorStore.addStrings([
-    "This project uses MCP to connect LLMs to local tools.",
-    "The RAG process uses nomic-embed-text for vectorization.",
-    "The main controller is built with TypeScript."
-  ]);
+// Check if specific command is passed
+const args = process.argv.slice(2);
+const command = args[0];
 
-  console.log("RAG system is ready!");
-  return vectorStore;
+if (command === 'agent' || !command) {
+  console.log('\nTo start the agent, run: npm run agent\n');
 }
 
-setupRAG();
+console.log(`Config:
+  - Express API: ${config.expressApiUrl}
+  - Ollama: ${config.ollamaHost}
+  - LLM Model: ${config.llmModel}
+  - Embedding Model: ${config.embeddingModel}
+`);

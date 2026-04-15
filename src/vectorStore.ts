@@ -1,17 +1,27 @@
 import { OllamaEmbeddings } from "@langchain/ollama";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
+import * as fs from "fs";
 
-const embeddings = new OllamaEmbeddings({
-  model: "nomic-embed-text", 
-});
+export async function initializeRAG() {
+  const embeddings = new OllamaEmbeddings({
+    model: "nomic-embed-text",
+  });
 
-// This turns your text into the math vectors we discussed
-const vectorStore = await MemoryVectorStore.fromTexts(
-  ["Your document text here"],
-  [{ id: 1 }],
-  embeddings
-);
+  const vectorStore = new MemoryVectorStore(embeddings);
 
+  // Load a local file to use as knowledge
+//   const projectDocs = fs.readFileSync("./docs/project-info.txt", "utf-8");
+  const projectDocs = [
+    "This project uses MCP to connect LLMs to local tools.",
+    "The RAG process uses nomic-embed-text for vectorization.",
+    "The main controller is built with TypeScript."
+  ];
+  
+  await vectorStore.addStrings([projectDocs]);
+  console.log("✅ RAG Knowledge Base Loaded.");
+  
+  return vectorStore;
+}
 /*
 Why MCP + RAG is Powerful in TS
 By using TypeScript, you can define Interfaces for your data. This ensures that the information coming out of your RAG process matches the input requirements of your MCP tools perfectly.
