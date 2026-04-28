@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "@langchain/core": "^0.3.80",
+    "@langchain/ollama": "^0.2.4",
+    "langchain": "^0.3.37"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
+  }
+}
