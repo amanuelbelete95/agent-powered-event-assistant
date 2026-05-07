@@ -5,6 +5,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import config from './config.js';
+import { callApi } from './lib/api-client.js';
 
 const server = new Server(
   {
@@ -17,33 +18,6 @@ const server = new Server(
     },
   }
 );
-
-function getHeaders() {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  if (config.serviceToken) {
-    headers['Authorization'] = `Bearer ${config.serviceToken}`;
-  }
-  return headers;
-}
-
-async function callApi<T>(method: string, endpoint: string, body?: unknown): Promise<T> {
-  const url = `${config.expressApiUrl}${endpoint}`;
-  
-  const response = await fetch(url, {
-    method,
-    headers: getHeaders(),
-    body: body ? JSON.stringify(body) : undefined,
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorText}`);
-  }
-
-  return response.json() as Promise<T>;
-}
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
