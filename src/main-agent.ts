@@ -1,6 +1,5 @@
 import readline from 'readline';
 import config from './config.js';
-import { loadApiMap, embedChunks, search } from './rag-engine.js';
 import { callApi } from './lib/api-client.js';
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -52,11 +51,6 @@ const tools: Tool[] = [
       user_id: { type: 'number', description: 'User ID', required: true },
       reason: { type: 'string', description: 'Reason for registration', required: true }
     }
-  },
-  {
-    name: 'search_api_docs',
-    description: 'Search the API documentation for relevant endpoints. Use when user asks "how", "which", "what endpoint", or wants to understand API capabilities.',
-    parameters: { query: { type: 'string', description: 'Search query', required: true } }
   }
 ];
 
@@ -170,15 +164,6 @@ async function executeTool(toolName: string, args: Record<string, unknown>): Pro
       return `✅ Registered:\n` + JSON.stringify(result, null, 2);
     }
     
-    case 'search_api_docs': {
-      const results = await search(args.query as string);
-      if (results.length > 0) {
-        return `🔍 Found ${results.length} relevant endpoint(s):\n\n` + 
-          results.map((r: any, i: number) => `${i + 1}. ${r.chunk.content.split('\n').slice(0, 2).join('\n   ')}`).join('\n\n');
-      }
-      return 'No relevant endpoints found';
-    }
-    
     default:
       return `Unknown tool: ${toolName}`;
   }
@@ -278,12 +263,6 @@ function handleInput(input: string) {
 
 async function initialize() {
   console.log('🤖 Initializing Event Management Agent...\n');
-  
-  console.log('📚 Loading API Map into RAG...');
-  loadApiMap();
-  await embedChunks();
-  console.log('✅ RAG Engine ready\n');
-  
   console.log('🎯 Agent mode: LLM decides which tool to use\n');
   console.log('🚀 Agent ready! Type your request below.\n');
   console.log('─'.repeat(50));
