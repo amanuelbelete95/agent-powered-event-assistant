@@ -5,6 +5,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import config from './config.js';
+import { callApi } from './lib/api-client.js';
 
 const server = new Server(
   {
@@ -17,33 +18,6 @@ const server = new Server(
     },
   }
 );
-
-function getHeaders() {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  if (config.serviceToken) {
-    headers['Authorization'] = `Bearer ${config.serviceToken}`;
-  }
-  return headers;
-}
-
-async function callApi<T>(method: string, endpoint: string, body?: unknown): Promise<T> {
-  const url = `${config.expressApiUrl}${endpoint}`;
-  
-  const response = await fetch(url, {
-    method,
-    headers: getHeaders(),
-    body: body ? JSON.stringify(body) : undefined,
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorText}`);
-  }
-
-  return response.json() as Promise<T>;
-}
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
@@ -228,13 +202,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         result = await callApi('GET', '/api/users');
         break;
       case 'get_user':
-        result = await callApi('GET', `/api/users/${args.id}`);
+        result = await callApi('GET', `/api/users/${args!.id}`);
         break;
       case 'update_user':
-        result = await callApi('PUT', `/api/users/${args.id}`, args);
+        result = await callApi('PUT', `/api/users/${args!.id}`, args);
         break;
       case 'delete_user':
-        result = await callApi('DELETE', `/api/users/${args.id}/delete`);
+        result = await callApi('DELETE', `/api/users/${args!.id}/delete`);
         break;
       case 'create_event':
         result = await callApi('POST', '/api/events', args);
@@ -243,13 +217,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         result = await callApi('GET', '/api/events');
         break;
       case 'get_event':
-        result = await callApi('GET', `/api/events/${args.id}`);
+        result = await callApi('GET', `/api/events/${args!.id}`);
         break;
       case 'update_event':
-        result = await callApi('PUT', `/api/events/${args.id}/update`, args);
+        result = await callApi('PUT', `/api/events/${args!.id}/update`, args);
         break;
       case 'delete_event':
-        result = await callApi('DELETE', `/api/events/${args.id}/delete`);
+        result = await callApi('DELETE', `/api/events/${args!.id}/delete`);
         break;
       case 'register_to_event':
         result = await callApi('POST', '/api/event-register', args);
@@ -258,7 +232,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         result = await callApi('GET', '/api/event-register');
         break;
       case 'check_registration':
-        result = await callApi('GET', `/api/event-register/check?eventId=${args.eventId}&userId=${args.userId}`);
+        result = await callApi('GET', `/api/event-register/check?eventId=${args!.eventId}&userId=${args!.userId}`);
         break;
       default:
         throw new Error(`Unknown tool: ${name}`);

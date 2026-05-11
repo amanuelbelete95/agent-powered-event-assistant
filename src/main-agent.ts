@@ -1,6 +1,6 @@
 import readline from 'readline';
 import config from './config.js';
-import { loadApiMap, embedChunks, search } from './rag-engine.js';
+import { callApi } from './lib/api-client.js';
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
@@ -51,33 +51,8 @@ const tools: Tool[] = [
       user_id: { type: 'number', description: 'User ID', required: true },
       reason: { type: 'string', description: 'Reason for registration', required: true }
     }
-  },
-  {
-    name: 'search_api_docs',
-    description: 'Search the API documentation for relevant endpoints. Use when user asks "how", "which", "what endpoint", or wants to understand API capabilities.',
-    parameters: { query: { type: 'string', description: 'Search query', required: true } }
   }
 ];
-
-async function callApi(endpoint: string, method: string = 'GET', body?: unknown): Promise<unknown> {
-  const url = `${config.expressApiUrl}${endpoint}`;
-  
-  const response = await fetch(url, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.serviceToken}`
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    return { error: `${response.status} ${response.statusText}`, details: error };
-  }
-
-  return response.json();
-}
 
 function buildSystemPrompt(): string {
   return `You are an intelligent agent for an Event Management System.
@@ -150,7 +125,7 @@ The query in search_api_docs should be the user's original question or a brief d
 async function executeTool(toolName: string, args: Record<string, unknown>): Promise<string> {
   switch (toolName) {
     case 'list_events': {
-      const events = await callApi('/api/events');
+      const events = await callApi('GET', '/api/events');
       const list = events as unknown[];
       if (Array.isArray(list) && list.length > 0) {
         return `📋 Events (${list.length}):\n` + list.map((e: any) => 
@@ -160,7 +135,7 @@ async function executeTool(toolName: string, args: Record<string, unknown>): Pro
     }
     
     case 'list_users': {
-      const users = await callApi('/api/users');
+      const users = await callApi('GET', '/api/users');
       const list = users as unknown[];
       if (Array.isArray(list) && list.length > 0) {
         return `👥 Users (${list.length}):\n` + list.map((u: any) => 
@@ -170,32 +145,23 @@ async function executeTool(toolName: string, args: Record<string, unknown>): Pro
     }
     
     case 'get_event': {
-      const event = await callApi(`/api/events/${args.id}`);
+      const event = await callApi('GET', `/api/events/${args.id}`);
       return JSON.stringify(event, null, 2);
     }
     
     case 'get_user': {
-      const user = await callApi(`/api/users/${args.id}`);
+      const user = await callApi('GET', `/api/users/${args.id}`);
       return JSON.stringify(user, null, 2);
     }
     
     case 'create_event': {
-      const result = await callApi('/api/events', 'POST', args);
+      const result = await callApi('POST', '/api/events', args);
       return `✅ Event created:\n` + JSON.stringify(result, null, 2);
     }
     
     case 'register_to_event': {
-      const result = await callApi('/api/event-register', 'POST', args);
+      const result = await callApi('POST', '/api/event-register', args);
       return `✅ Registered:\n` + JSON.stringify(result, null, 2);
-    }
-    
-    case 'search_api_docs': {
-      const results = await search(args.query as string);
-      if (results.length > 0) {
-        return `🔍 Found ${results.length} relevant endpoint(s):\n\n` + 
-          results.map((r: any, i: number) => `${i + 1}. ${r.chunk.content.split('\n').slice(0, 2).join('\n   ')}`).join('\n\n');
-      }
-      return 'No relevant endpoints found';
     }
     
     default:
@@ -297,12 +263,6 @@ function handleInput(input: string) {
 
 async function initialize() {
   console.log('🤖 Initializing Event Management Agent...\n');
-  
-  console.log('📚 Loading API Map into RAG...');
-  loadApiMap();
-  await embedChunks();
-  console.log('✅ RAG Engine ready\n');
-  
   console.log('🎯 Agent mode: LLM decides which tool to use\n');
   console.log('🚀 Agent ready! Type your request below.\n');
   console.log('─'.repeat(50));
